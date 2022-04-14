@@ -1,0 +1,57 @@
+html, body{
+      	margin: 0;
+        overflow: hidden;
+      }
+      .ak {
+      	position: fixed;
+      }
+      .ak__btn{
+        display: flex;
+      }
+      .ak__menu{
+      	transition: .2s all;
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        align-items: center;
+        position: fixed;
+        top: -30px;
+      }
+      .ak__user:hover .ak__menu{
+		transform: scale(1);
+        position: unset;
+        
+      }
+      .ak__item{
+        
+        margin-left: 40px;
+      }
+      .ak__item:hover{
+      	transform: scale(1.1);
+
+      }
+      .ak__user{
+      	display: flex;
+      }
+      .ak__exit{
+        background-image: url('/stat/exit.svg');
+      }	
+      .ak__load{
+      	background-image: url('/stat/upload.svg');
+      }
+      .ak__exit,.ak__load{
+        width: 25px;
+        height: 25px;
+        display: flex;
+      	color: #000;
+        text-decoration: none;
+        background-repeat: no-repeat;
+    	background-position: right;
+    	background-size: contain;
+        font-size: 0;
+        cursor: pointer;
+      }
+      .is-hidden{
+      	display: none;
+      }

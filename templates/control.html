@@ -1,0 +1,63 @@
+{% extends 'space.html' %}
+{% block animate %}
+</script>
+<script src='/stat/OrbitControls.js'></script>
+<script src='/stat/three.interaction.js'></script>
+<script>
+const control = new THREE.OrbitControls(camera, renderer.domElement);
+control.enableDamping = true;
+control.dampingFactor = 0.05;
+control.screenSpacePanning = false;
+control.rotateSpeed = 1.0;
+control.zoomSpeed = 1.2;
+control.panSpeed = 0.8;
+  
+//const inter = new THREE.Interaction(renderer, scene, camera);
+  
+window.addEventListener('load',      render);
+window.addEventListener('resize',    resize);   
+function resize(){  
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize( window.innerWidth, window.innerHeight ); 
+    //control.handleResize();
+} 
+async function start(pos, k=200){
+  camera.position.z = pos.z*k;
+  camera.position.x = pos.x*k;
+  camera.position.y = pos.y*k;
+  //control.handleResize();
+}  
+const urls = new Set();
+async function add_box(url, pos, k=200, s=50){ 
+  
+      if (urls.has(url)) return;
+      //let geometry = new THREE.PlaneGeometry(s, s, 2, 2);
+      let geometry = new THREE.BoxGeometry(s, s, s, 2, 2, 2);
+      let texture = new THREE.TextureLoader().load( url );
+      //let material = new THREE.MeshNormalMaterial({wireframe: true});
+      let material = new THREE.MeshBasicMaterial({map: texture});
+      let cube = new THREE.Mesh( geometry, material );
+      cube.position.x = pos.x*k;
+      cube.position.y = pos.y*k;
+      cube.position.z = pos.z*k;
+  	  cube.cursor = 'pointer';
+	  cube.on('click', function(ev) {start(pos, k)});
+      scene.add( cube );
+      urls.add(url);
+  
+}
+
+function render(){
+  
+  	{% block render %}{% endblock%}
+      
+    function animate() {
+		requestAnimationFrame( animate );
+        control.update();
+		renderer.render( scene, camera );
+	};
+	animate();
+}
+
+{% endblock %}

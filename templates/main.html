@@ -1,0 +1,18 @@
+{% extends 'control.html' %}
+{% block render %}
+  
+async function load_rand(){
+  	let k = 400;
+	let response = await fetch('/imgs');
+	if (response.ok) { 
+    	let json = await response.json();
+      	start(json.center, k);
+      	for (var obj of json.imgs)
+      		add_box('/img/'+obj.i, obj, k);
+      	
+    }
+}
+
+load_rand();
+
+{% endblock %}

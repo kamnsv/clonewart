@@ -1,0 +1,31 @@
+{% extends 'control.html' %}
+{% block render %}
+  
+async function load_cubs(){
+  let k = 200;
+  let page = 0;	
+  let count = 0;
+  do {
+    let response = await fetch('/imgs/'+ (++page));
+    if (response.ok) { 
+      	let json = await response.json();
+      	count = json.imgs.length
+      	if (1 == page){
+          add_box('/img/'+json.center.i, json.center, k);
+          start(json.center, k);
+          document.querySelector('.ak__user').addEventListener('click', function(){
+            start(json.center, k);
+          });
+        }
+    	for (var obj of json.imgs)
+      		add_box('/img/'+obj.i, obj, k);
+      	
+    }
+
+  } while (count > 0)
+  
+
+}  
+load_cubs(); 
+
+{% endblock %}

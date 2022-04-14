@@ -1,0 +1,1 @@
+#ALTER TABLE `Img` CHANGE `version` `version` INT(11) NOT NULL DEFAULT '2';

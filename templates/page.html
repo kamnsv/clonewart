@@ -1,0 +1,34 @@
+{% extends 'base.html' %}
+{% block head %}
+    <link href="https://telegram.org/css/widget-frame.css?59" rel="stylesheet">
+    <link href="stat/menu.css" rel="stylesheet">
+	{% block js%}{% endblock %}
+    <title>{% block title %}{{ title }}{% endblock %}</title>
+{% endblock %}
+{% block body %}
+    <div class="ak">
+    {% if name %}
+    	<div class="ak__user tgme_widget_login large" data-id="{{ userId }}"> 
+        <i class="tgme_widget_login_user_photo bgcolor5" ><img src="/img" class="ak__img"></i>
+    	<button class="tgme_widget_login_button ak__btn">{{name}}</button>
+        <ul class="ak__menu">
+        {% if load %}
+          <li class="ak__item">
+            <label for="upload" class="ak__load"></label>
+          	<input id="upload" class="is-hidden ak__file" type="file" required multiple accept="image/jpeg,image/png,image/gif"/>
+          </li>
+    	{% endif %}
+          <li class="ak__item">
+          	<a href="/logout" class="ak__exit"></a>	
+          </li>
+        </ul>
+    {% else %}
+      <div class="ak__guest">    
+      	<script async src="https://telegram.org/js/telegram-widget.js?14" data-telegram-login="clonewart_bot" data-size="large" data-auth-url="/login" data-request-access="write"></script>
+    
+    {% endif %}
+      </div>
+	</div>
+    
+    {% block script %}{% endblock %}
+{% endblock %}

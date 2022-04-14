@@ -1,0 +1,117 @@
+{% extends 'control.html' %}
+{% block render %}
+const scaleK = 200;  
+async function load_my(){
+
+	  let response = await fetch('/my');
+	  if (response.ok) { 
+			let json = await response.json();
+			for (var obj of json)
+				add_box('/img/'+obj.i, obj, scaleK);
+			start(obj, scaleK); 	
+	  }
+
+}  
+load_my(); 
+
+async function init_upload(){
+	e = document.getElementsByTagName('canvas')[0];
+  	e.addEventListener('dragover', function(ev){ev.preventDefault();});
+    e.addEventListener('drop', drop_files);
+	e = document.getElementById('upload');
+	e.addEventListener('change', load_files);
+}  
+init_upload();
+
+async function upload_file(file){
+	await new Promise(function (resolve, reject) {
+		let filename = file.name;
+		let ext = filename.split('.').pop().toLowerCase();
+		if (!['jpg','png'].includes(ext)){
+			console.log(filename, 'file type is incorrect');	
+			return;
+		}
+		let data = new FormData();
+		let request = new XMLHttpRequest();
+		request.responseType = "json";
+		let filesize = file.size;
+		document.cookie = `filesize=${filesize}`;
+		data.append("file", file);  
+		request.upload.addEventListener("progress", function (e) {
+			let loaded = e.loaded;
+			let total = e.total
+			let percent_complete = loaded / total;
+			console.log(filename, percent_complete);
+			prog.value = percent_complete;
+			if (1 == percent_complete) 
+				prog.removeAttribute('value');
+		});
+		request.addEventListener("load", function (e) {
+			if (request.status == 200) {
+				console.log(filename, "load");
+				ak.removeChild(prog);
+				add_box('/img/'+request.response.i, request.response, scaleK);
+				start(request.response, scaleK);
+				resolve();
+			}
+			else {
+				console.log(filename, "bad");
+				ak.removeChild(prog);
+				reject(request.status);
+			}
+		});  
+		request.addEventListener("error", function (e) {
+			console.log(filename, "error");
+			ak.removeChild(prog);
+			reject();
+			
+		});  
+		request.addEventListener("abort", function (e) {
+			console.log(filename, "cansel");
+			ak.parentNode.removeChild(prog);
+			resolve();
+		});
+
+		var prog = document.createElement("progress");
+		prog.value = 0;
+		var ak = document.querySelector('.ak');
+		ak.appendChild(prog);
+
+		request.open("post", "/put");
+		request.send(data);
+});
+}
+
+async function load_files(event){
+  event.target.disabled = true;
+
+  for (file of event.target.files)
+		await upload_file(file);
+	    
+		
+   event.target.disabled = false;	
+   event.target.value = null;
+}
+
+async function drop_files(ev){
+	ev.preventDefault();
+  	if (undefined == ev.dataTransfer) return;
+	const typeit =  ev.dataTransfer.items ? true : false;  
+	const files = typeit ? ev.dataTransfer.items : ev.dataTransfer.files;  
+	const arr = []
+	for (var i = 0; i < files.length; i++){
+       if (typeit) {                              
+       	if ("file" === files[i].kind)
+           //await upload_file(files[i].getAsFile());
+           arr.push(files[i].getAsFile());                          
+       } else {
+           //await upload_file(files[i]); 
+           arr.push(files[i]);                             		
+       }
+    }
+    for (var i = 0; i < arr.length; i++)                                 
+		await upload_file(arr[i])
+}
+
+{% endblock %}
+      
