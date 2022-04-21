@@ -1,16 +1,41 @@
 {% extends 'control.html' %}
 {% block render %}
-const scaleK = 200;  
+
+var kscale = 50;
+
+function add_img(obj){
+	let json = [];
+	for (i of boxes)
+		json.push(i[0]);
+	json.push(obj);
+	kscale = get_kscale(json);
+	box = add_box('/img/'+obj.i, obj, kscale);
+	boxes.push([obj, box]);
+	box.callback = function(){
+				console.log(obj);
+				//start(obj, kscale);
+			}
+}
+
+const boxes = [];
 async function load_my(){
 
-	  let response = await fetch('/my');
-	  if (response.ok) { 
-			let json = await response.json();
-			for (var obj of json)
-				add_box('/img/'+obj.i, obj, scaleK);
-			start(obj, scaleK); 	
-	  }
-
+	let response = await fetch('/my');
+	if (!response.ok) return;
+	let json = await response.json();
+	kscale = get_kscale(json); 
+	console.log('k=',kscale);
+	for (var obj of json)
+		boxes.push([obj, add_box('/img/'+obj.i, obj, kscale)]);
+	
+	for (i of boxes){
+		let [obj, box] = [i[0], await i[1]]
+		box.callback = function(){
+				console.log(obj);
+				start(obj, kscale);
+			}
+	  }    
+	start(i[0], kscale);
 }  
 load_my(); 
 
@@ -50,8 +75,7 @@ async function upload_file(file){
 			if (request.status == 200) {
 				console.log(filename, "load");
 				ak.removeChild(prog);
-				add_box('/img/'+request.response.i, request.response, scaleK);
-				start(request.response, scaleK);
+				add_img(request.response);
 				resolve();
 			}
 			else {

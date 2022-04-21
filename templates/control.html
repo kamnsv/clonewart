@@ -2,20 +2,44 @@
 {% block animate %}
 </script>
 <script src='/stat/OrbitControls.js'></script>
-<script src='/stat/three.interaction.js'></script>
+<!--<script src='/stat/TrackballControls.js'></script>-->
+<!--<script src='/stat/PointerLockControls.js'></script>-->
 <script>
-const control = new THREE.OrbitControls(camera, renderer.domElement);
-control.enableDamping = true;
-control.dampingFactor = 0.05;
-control.screenSpacePanning = false;
-control.rotateSpeed = 1.0;
-control.zoomSpeed = 1.2;
-control.panSpeed = 0.8;
   
-//const inter = new THREE.Interaction(renderer, scene, camera);
+function get_control(pos){
+  let control = new THREE.OrbitControls(camera, renderer.domElement);
+  //let control = new THREE.TrackballControls(camera, renderer.domElement);
+  //let control = new THREE.MapControls( camera, renderer.domElement );
+  //let control = new THREE.PointerLockControls( camera, renderer.domElement );
+  //control.enableDamping = false; 
+  //control.screenSpacePanning = false;
+
+  control.target.set( 0, 50, 0 );
+  control.update();
+  return control;
+}  
   
+control = get_control();  
 window.addEventListener('load',      render);
-window.addEventListener('resize',    resize);   
+window.addEventListener('resize',    resize); 
+  
+//renderer.domElement.addEventListener('click',     onDocumentMouseDown, false);
+var raycaster = new THREE.Raycaster();
+var mouse = new THREE.Vector2();
+  
+function onDocumentMouseDown( event ) {
+  console.log(event);
+  //event.preventDefault();
+  mouse.x = ( event.clientX / renderer.domElement.clientWidth ) * 2 - 1;
+  mouse.y = - ( event.clientY / renderer.domElement.clientHeight ) * 2 + 1;
+  raycaster.setFromCamera( mouse, camera );
+  var intersects = raycaster.intersectObjects( scene.children );
+
+  if ( intersects.length > 0 && intersects[0].object.callback != undefined) {
+      intersects[0].object.callback();
+  }
+}
+  
 function resize(){  
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
@@ -23,17 +47,19 @@ function resize(){
     //control.handleResize();
 } 
 async function start(pos, k=200){
-  camera.position.z = pos.z*k;
+  camera.position.z = pos.z*k+k;
   camera.position.x = pos.x*k;
   camera.position.y = pos.y*k;
+  control.target.set( pos.x*k, pos.y*k, pos.z*k );
+  control.update();
   //control.handleResize();
 }  
 const urls = new Set();
-async function add_box(url, pos, k=200, s=50){ 
+async function add_box(url, pos, k=200, s=50, c=0, l=2){ 
   
       if (urls.has(url)) return;
       //let geometry = new THREE.PlaneGeometry(s, s, 2, 2);
-      let geometry = new THREE.BoxGeometry(s, s, s, 2, 2, 2);
+      let geometry = new THREE.BoxGeometry(s, s, s, l, l, l);
       let texture = new THREE.TextureLoader().load( url );
       //let material = new THREE.MeshNormalMaterial({wireframe: true});
       let material = new THREE.MeshBasicMaterial({map: texture});
@@ -42,19 +68,50 @@ async function add_box(url, pos, k=200, s=50){
       cube.position.y = pos.y*k;
       cube.position.z = pos.z*k;
   	  cube.cursor = 'pointer';
-	  cube.on('click', function(ev) {start(pos, k)});
       scene.add( cube );
       urls.add(url);
-  
+  	  if (c != 0) {	
+  	  	let outmats = new THREE.MeshBasicMaterial( {color: c, wireframe : true} );
+      	let outmesh = new THREE.Mesh( geometry, outmats );
+  		outmesh.position.x = pos.x*k;
+        outmesh.position.y = pos.y*k;
+        outmesh.position.z = pos.z*k;
+        scene.add( outmesh );
+      }
+  		
+  	  return cube;
 }
 
+function get_kscale(json){
+	let min = {x: null, y: null, z: null};
+	let max = {x: null, y: null, z: null};
+	for (var obj of json)	{			
+		for (i of ['x','y','z'])		{
+			if (null == min[i] || min[i] > obj[i]) min[i] = obj[i];
+			if (null == max[i] || max[i] < obj[i]) max[i] = obj[i];
+		}	
+	}
+			
+    let maxd = null; 
+    for (i of ['x','y','z'])	{
+    	d = max[i]-min[i];     
+    	if (null == maxd || maxd < d)
+		maxd = d;
+	}
+    if (!maxd) return 50;
+  
+	let diag = Math.pow(Math.pow(window.screen.height,2) + Math.pow(window.screen.width,2), 0.5);
+	console.log(max, min, maxd, diag);
+  	
+    return diag/maxd;
+} 
+  
 function render(){
   
   	{% block render %}{% endblock%}
       
     function animate() {
 		requestAnimationFrame( animate );
-        control.update();
 		renderer.render( scene, camera );
 	};
 	animate();

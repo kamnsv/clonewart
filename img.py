@@ -10,7 +10,7 @@ def img(app):
             return render_template('error.html', title=401)	
         
         db = DB(app)
-        res = db(f'SELECT path FROM Img WHERE id_user=%s AND NOT src IS NULL;' % session.get('userId'))
+        res = db(f'SELECT path FROM Img INNER JOIN User ON Img.id=User.ava WHERE User.id=%s;' % session.get('userId'))
         if len(res): 
             fname = os.path.join(app.static_folder, res[0]['path'])
             if os.path.isfile(fname):
@@ -28,7 +28,7 @@ def img(app):
         if 0 == len(res):
             return render_template('error.html', title=404)
 
-        if  res[0]['id_user'] in (0, session.get('userId', None)):
+        if  res[0]['id_user']<0 or res[0]['id_user'] == session.get('userId', None):
             fname = os.path.join(app.static_folder, res[0]['path'])
             if os.path.isfile(fname):
                 return send_file(fname)
@@ -36,17 +36,34 @@ def img(app):
             
         return render_template('error.html', title=403)    
     
-    #Случайное окружение из фото
+    #Все демо фото
     @app.route('/imgs')
     def get_imgs():
         db = DB(app)
-        res = db(f'SELECT id as i, predx as x, predy as y, predz as z FROM Img WHERE id_user = 0 ORDER BY rand() LIMIT 1;')
+        imgs = db(f'SELECT id as i, predx as x, predy as y, predz as z FROM Img WHERE id_user < 1;')
+        return jsonify(imgs)
+    
+    #Случайные демо актеры 
+    @app.route('/demo/<int:i>')
+    def get_demo(i):
+        db = DB(app)
+        actors = db(f'SELECT id_user as c FROM `Img` GROUP BY id_user ORDER BY rand() LIMIT {i};');
+        imgs = []
+        for actor in actors:
+           imgs += db(f'SELECT -id_user as c, id as i, predx as x, predy as y, predz as z FROM Img WHERE id_user=%s;' % actor['c'])
+        return jsonify(imgs)
+        
+    #Случайное окружение из фото 
+    @app.route('/rnd')
+    def get_rnds():
+        db = DB(app)
+        res = db(f'SELECT id as i, predx as x, predy as y, predz as z FROM Img WHERE id_user < 1 ORDER BY rand() LIMIT 1;')
         if not len(res): return jsonify(res)  
         i = res[0]['i']
         s = 'img_%s as i, predx as x, predy as y, predz as z'
         f = 'Dist INNER JOIN Img ON Dist.img_%s = Img.id'
-        w = f'Dist.img_%s = {i} AND dist < 100'
-        imgs = db(f'SELECT {s % "b"} FROM {f % "b"} WHERE {w % "a"} UNION SELECT {s % "a"} FROM {f % "a"} WHERE {w % "b"} LIMIT 50;')
+        w = f'Dist.img_%s = {i} AND dist < 100 AND id_user < 1'
+        imgs = db(f'SELECT {s % "b"} FROM {f % "b"} WHERE {w % "a"} UNION SELECT {s % "a"} FROM {f % "a"} WHERE {w % "b"} LIMIT 1000;')
         return jsonify({'center': res[0], 'imgs': imgs})   
     
     #Загрузка мира
